@@ -21,24 +21,43 @@ export default class Slide {
     }
 
     onStart(event){
-        event.preventDefault();
-        this.dist.startX = event.clientX;
-        this.wrapper.addEventListener('mousemove', this.onMove);
+        // esta variavel vai guardar o tipo do movimento, se é com o mouse ou com o touch
+        let moveType;
+
+        if (event.type === 'mousedown') {
+            event.preventDefault();
+            this.dist.startX = event.clientX;
+            moveType = 'mousemove'
+
+        } else {
+            // no evento de toque o clientX esta dentro de cada item da propriedade de changedTouches, que grava informações de multiplos toques. O item [0] dessa lista seria o primeiro toque mesmo
+            this.dist.startX = event.changedTouches[0].clientX;
+            moveType = 'touchmove'
+            
+        }
+        this.wrapper.addEventListener(moveType, this.onMove);
     }
 
     onMove(event){
-        const finalPosition = this.updatePosition(event.clientX);
+        // estipula a posição do pointer considerando o tipo do evento (se é de mouse ou touch)
+        const pointerPosition = (event.type === 'mousemove') ? event.clientX : event.changedTouches[0].clientX;
+
+        const finalPosition = this.updatePosition(pointerPosition);
         this.moveSlide(finalPosition);
     }
 
-    onFinish(){
-        this.wrapper.removeEventListener('mousemove', this.onMove);
+    onFinish(event){
+        const moveType = (event.type === 'mouseup') ? 'mousemove' : 'touchmove';
+
+        this.wrapper.removeEventListener(moveType, this.onMove);
         this.dist.finalPosition = this.dist.movePosition;
     }
 
     addSlideEvents(){
         this.wrapper.addEventListener('mousedown', this.onStart);
         this.wrapper.addEventListener('mouseup', this.onFinish);
+        this.wrapper.addEventListener('touchstart', this.onStart);
+        this.wrapper.addEventListener('touchend', this.onFinish);
     }
 
     bindEvents(){
