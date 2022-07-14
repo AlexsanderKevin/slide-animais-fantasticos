@@ -1,3 +1,5 @@
+import debounce from './debounce.js'
+
 export default class Slide {
     constructor(slide, wrapper) {
         this.slide = document.querySelector(slide);
@@ -7,6 +9,7 @@ export default class Slide {
             startX: 0,
             movement: 0
         }
+        this.activeClass = 'active';
     }
 
     transition(active){
@@ -83,12 +86,6 @@ export default class Slide {
         this.wrapper.addEventListener('touchend', this.onFinish);
     }
 
-    bindEvents(){
-        this.onStart = this.onStart.bind(this);
-        this.onMove = this.onMove.bind(this);
-        this.onFinish = this.onFinish.bind(this);
-    }
-
     slidePosition(slide){
         const margin  = (this.wrapper.offsetWidth - slide.offsetWidth) / 2
         console.log(margin);
@@ -123,6 +120,7 @@ export default class Slide {
         this.moveSlide(activeSlide.position);
         this.slideIndexNav(index);
         this.dist.finalPosition = activeSlide.position;
+        this.changeActiveClass();
     }
 
     activePrevSlide(){
@@ -135,11 +133,37 @@ export default class Slide {
             this.changeSlide(this.index.next);
     }
 
+    changeActiveClass(){
+        this.slideArray.forEach(({element}) => 
+            element.classList.remove(this.activeClass))
+
+        this.slideArray[this.index.active].element.classList.add(this.activeClass);
+    }
+
+    onResize(){
+        setTimeout(() => {
+            this.slideConfig();
+            this.changeSlide(this.index.active);
+        }, 500);
+    }
+
+    addResizeEvent(){
+        window.addEventListener('resize', this.onResize);
+    }
+
+    bindEvents(){
+        this.onStart = this.onStart.bind(this);
+        this.onMove = this.onMove.bind(this);
+        this.onFinish = this.onFinish.bind(this);
+        this.onResize = debounce(this.onResize.bind(this), 200);
+    }
+
     init(){
         this.bindEvents();
         this.transition(true);
         this.addSlideEvents();
         this.slideConfig();
+        this.addResizeEvent();
         return this;
     }
 }
